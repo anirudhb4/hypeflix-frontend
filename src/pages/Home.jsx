@@ -5,7 +5,7 @@ import HomeMovieCard from '../components/HomeMovieCard';
 const Home = () => {
   const { movies, loading, error } = useMovies();
   const [visibleMovies, setVisibleMovies] = useState([]);
-  const [itemsToShow, setItemsToShow] = useState(2); // Start by showing 2 movies
+  const [itemsToShow, setItemsToShow] = useState(5); // Start by showing 5 movies
 
   // This effect slices our full movie list into a "visible" list
   useEffect(() => {
@@ -14,7 +14,7 @@ const Home = () => {
 
   // This function is called by the scroll handler
   const loadMore = useCallback(() => {
-    setItemsToShow(prevCount => prevCount + 2); // Load 2 more movies
+    setItemsToShow(prevCount => prevCount + 5); // Load 5 more movies
   }, []);
 
   // This is the new scroll handler
