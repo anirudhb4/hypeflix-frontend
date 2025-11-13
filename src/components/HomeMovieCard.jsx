@@ -4,25 +4,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { formatReleaseDate, formatCompact } from '../services/utils';
 import { Heart, Zap } from 'lucide-react';
 
-// This is a NEW component designed to fill the screen
 const HomeMovieCard = ({ movie }) => {
   const { session, hypedMovies, hypeMovie, unHypeMovie } = useAuth();
   const navigate = useNavigate();
 
-  // Get the initial scores
   const initialRawScore = movie.rawHypeScore;
   const initialHypeCount = movie.hypeCount;
   const isHyped = hypedMovies.has(movie.id);
 
-  // Local state for instant UI updates
   const [currentHype, setCurrentHype] = useState(initialRawScore);
   const [currentHypeString, setCurrentHypeString] = useState(initialHypeCount);
   const [isCurrentlyHyped, setIsCurrentlyHyped] = useState(isHyped);
-  const [popText, setPopText] = useState(''); // Text for the "+10K" animation
+  const [popText, setPopText] = useState('');
 
   const posterUrl = movie.posterPath 
-    ? `https://image.tmdb.org/t/p/original${movie.posterPath}` 
-    : 'https://via.placeholder.com/1920x1080?text=Image+Not+Available';
+    ? `https://image.tmdb.org/t/p/w1280${movie.posterPath}` 
+    : 'https://placehold.co/1280x720/000000/222222?text=Poster+Not+Available';
 
   const handleHypeToggle = async () => {
     if (!session) {
@@ -30,52 +27,43 @@ const HomeMovieCard = ({ movie }) => {
       return;
     }
 
-    // Toggle logic
     if (isCurrentlyHyped) {
-      // --- UNHYPE ---
       const newScore = currentHype - 10000;
-      unHypeMovie(movie.id); // Call backend (no need to await)
+      unHypeMovie(movie.id);
       setIsCurrentlyHyped(false);
       setCurrentHype(newScore);
       setCurrentHypeString(formatCompact(newScore));
-      setPopText('-10K'); // Show unhype animation
+      setPopText('-10K');
     } else {
-      // --- HYPE ---
       const newScore = currentHype + 10000;
-      hypeMovie(movie.id); // Call backend (no need to await)
+      hypeMovie(movie.id);
       setIsCurrentlyHyped(true);
       setCurrentHype(newScore);
       setCurrentHypeString(formatCompact(newScore));
-      setPopText('+10K'); // Show hype animation
+      setPopText('+10K');
     }
-
-    // Reset animation text after it plays
     setTimeout(() => setPopText(''), 750);
   };
 
   return (
     // This is one "slide" in the vertical scroller
-    <div className="h-screen w-screen snap-start relative flex items-center justify-center">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-500"
-        style={{ backgroundImage: `url(${posterUrl})` }}
-      />
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 w-full h-full bg-black/60" />
+    <div className="h-screen w-screen snap-start relative flex items-center justify-center overflow-hidden">
+      
+      {/* Background Gradient */}
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
       
       {/* Foreground Content */}
-      <div className="relative z-10 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <div className="relative z-20 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         
         {/* Left Side: Text Content */}
-        <div className="flex flex-col gap-4 text-white">
+        <div className="flex flex-col gap-4 text-white animate-fade-in">
           <p className="font-semibold text-gray-300">{formatReleaseDate(movie.releaseDate)}</p>
           
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>
+          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
             {movie.title}
           </h1>
           
-          <p className="text-lg text-gray-200 max-w-2xl line-clamp-4">
+          <p className="text-lg text-gray-300 max-w-2xl line-clamp-6">
             {movie.overview}
           </p>
 
@@ -108,7 +96,14 @@ const HomeMovieCard = ({ movie }) => {
           </div>
         </div>
         
-        {/* Right Side: Empty on purpose, lets the poster shine */}
+        {/* Right Side: Poster Image */}
+        <div className="relative w-full h-[70vh] hidden md:block">
+           <img 
+            src={posterUrl} 
+            alt={movie.title} 
+            className="absolute inset-0 w-full h-full object-contain object-center rounded-lg"
+          />
+        </div>
       </div>
     </div>
   );
