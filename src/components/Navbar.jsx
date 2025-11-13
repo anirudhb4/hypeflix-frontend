@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Corrected path
+import { useAuth } from '../contexts/AuthContext';
 import { Clapperboard } from 'lucide-react';
 
 const Navbar = () => {
@@ -8,13 +8,14 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/'); // Redirect to home after logout
+    navigate('/');
   };
 
   return (
-    <nav className="bg-gray-900 text-white p-4 shadow-lg sticky top-0 z-50 backdrop-blur-md bg-opacity-80 border-b border-gray-700">
+    // Fixed at the top, transparent, with a backdrop blur for a "glass" effect
+    <nav className="fixed top-0 left-0 w-full bg-black/30 text-white p-4 shadow-lg z-50 backdrop-blur-md">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold text-red-500 tracking-tighter flex items-center gap-2">
+        <Link to="/" className="text-2xl font-bold text-white tracking-widest flex items-center gap-2">
           <Clapperboard />
           HYPEFLIX
         </Link>
@@ -23,27 +24,22 @@ const Navbar = () => {
           <Link to="/" className="text-gray-300 hover:text-white transition">Home</Link>
           <Link to="/leaderboard" className="text-gray-300 hover:text-white transition">Leaderboard</Link>
           
-          {/* --- THIS IS THE NEW LOGIC --- */}
+          {session && (
+            <Link to="/my-hype" className="text-gray-300 hover:text-white transition">My Hype</Link>
+          )}
+
           {session ? (
-            <>
-              <Link to="/my-hype" className="text-gray-300 hover:text-white transition">My Hype</Link>
-              <button 
-                onClick={handleLogout}
-                className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-600 transition"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link 
-              to="/login" 
-              className="bg-red-600 px-4 py-2 rounded hover:bg-red-700 transition"
+            <button
+              onClick={handleLogout}
+              className="bg-gray-700 px-4 py-2 rounded hover:bg-gray-800 transition font-medium"
             >
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="bg-white text-black px-4 py-2 rounded hover:bg-gray-200 transition font-medium">
               Login
             </Link>
           )}
-          {/* --- END OF NEW LOGIC --- */}
-
         </div>
       </div>
     </nav>

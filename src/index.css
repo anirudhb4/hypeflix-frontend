@@ -2,22 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* We're changing the pop-out animation to be a white circle with black text,
+  which will look amazing on the dark poster background.
+*/
 @keyframes pop-out {
   0% {
     opacity: 0;
-    transform: translateY(0) scale(0.5);
+    transform: scale(0.5) translateY(0);
   }
   50% {
     opacity: 1;
-    transform: translateY(-20px) scale(1.1);
+    transform: scale(1.1) translateY(-20px);
   }
   100% {
     opacity: 0;
-    transform: translateY(-30px) scale(1);
+    transform: scale(1) translateY(-40px);
   }
 }
 
-.animate-pop-out {
-  /* This class will apply our animation */
-  animation: pop-out 0.6s ease-out forwards;
+.pop-animation {
+  animation: pop-out 0.75s ease-out forwards;
+  position: absolute;
+  /* New B&W Style */
+  background-color: white;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 50;
+  pointer-events: none; /* So you can't click the number */
 }

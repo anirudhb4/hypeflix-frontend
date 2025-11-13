@@ -1,37 +1,63 @@
-import { useMovies } from '/src/contexts/MovieContext.jsx'; // 1. Import the hook
-import MovieCard from '/src/components/MovieCard.jsx';
-import { ShieldAlert } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useMovies } from '../contexts/MovieContext';
+import HomeMovieCard from '../components/HomeMovieCard';
 
 const Home = () => {
-  // 2. Get data from the global cache
   const { movies, loading, error } = useMovies();
+  const [visibleMovies, setVisibleMovies] = useState([]);
+  const [itemsToShow, setItemsToShow] = useState(2); // Start by showing 2 movies
+  const loaderRef = useRef(null);
 
-  // 3. All local 'useState' and 'useEffect' are GONE!
+  // This effect slices our full movie list into a "visible" list
+  useEffect(() => {
+    setVisibleMovies(movies.slice(0, itemsToShow));
+  }, [movies, itemsToShow]);
 
-  if (loading) return (
-    <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-      <div className="text-white text-2xl">Loading Hype...</div>
-    </div>
-  );
+  // This function is called by the IntersectionObserver
+  const loadMore = useCallback(() => {
+    setItemsToShow(prevCount => prevCount + 2); // Load 2 more movies
+  }, []);
 
-  if (error) return (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-red-400">
-      <ShieldAlert size={64} className="mb-4" />
-      <h2 className="text-2xl font-semibold">{error}</h2>
-    </div>
-  );
+  // This sets up the "infinite scroll" trigger
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          loadMore();
+        }
+      },
+      { threshold: 1.0 } // Trigger when the loader is 100% visible
+    );
+
+    const currentLoader = loaderRef.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
+    }
+
+    return () => {
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
+      }
+    };
+  }, [loadMore, loading]);
+
+  if (loading && itemsToShow === 2) return <div className="text-white text-center mt-20">Loading Hype...</div>;
+  if (error) return <div className="text-white text-center mt-20">{error}</div>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold text-white mb-6 border-l-4 border-red-500 pl-4">
-        Upcoming Indian Releases
-      </h1>
+    // This container is the key to the new layout
+    // It creates a full-height, vertical snap-scrolling "feed"
+    <div className="h-screen w-full snap-y snap-mandatory overflow-y-scroll overflow-x-hidden">
+      {visibleMovies.map((movie) => (
+        <HomeMovieCard key={movie.id} movie={movie} />
+      ))}
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {movies.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} />
-        ))}
-      </div>
+      {/* This is the invisible "trigger" to load more */}
+      {!loading && itemsToShow < movies.length && (
+        <div ref={loaderRef} className="h-20 w-full flex justify-center items-center">
+          <p className="text-gray-500">Loading more...</p>
+        </div>
+      )}
     </div>
   );
 };
