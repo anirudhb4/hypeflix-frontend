@@ -1,39 +1,49 @@
-import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Corrected path
+import { useState, useEffect } from 'react';
+import { useAuth } from '/src/contexts/AuthContext.jsx'; // Corrected path
 import { useNavigate } from 'react-router-dom';
-import { formatReleaseDate } from '../services/utils.js'; // Corrected path
+import { formatReleaseDate, formatCompact } from '/src/services/utils.js'; // Corrected path
 
 const MovieCard = ({ movie }) => {
   const posterUrl = movie.posterPath 
     ? `https://image.tmdb.org/t/p/w500${movie.posterPath}` 
     : 'https://via.placeholder.com/500x750?text=No+Image';
 
-  // --- GET DATA FROM OUR AUTH CONTEXT ---
-  // 1. Get the new 'unHypeMovie' function
   const { session, hypedMovies, hypeMovie, unHypeMovie } = useAuth();
   const navigate = useNavigate();
-
-  // --- CHECK IF THIS MOVIE ID IS IN OUR SET ---
   const isHyped = hypedMovies.has(movie.id);
-  
-  // Local state just for the "Loading..." text
+
   const [isHyping, setIsHyping] = useState(false);
+  const [displayScore, setDisplayScore] = useState(movie.rawHypeScore);
+  const [showHypeAnimation, setShowHypeAnimation] = useState(false);
+
+  useEffect(() => {
+    setDisplayScore(movie.rawHypeScore);
+  }, [movie.rawHypeScore]);
+
+  const displayHypeString = formatCompact(displayScore);
 
   const handleHypeClick = async () => {
-    // 1. If not logged in, go to login page
-    if (!session) { // Check against session
+    if (!session) {
       navigate('/login');
       return;
     }
-
     setIsHyping(true);
     
-    // 2. --- UPDATE THIS LOGIC ---
-    // If we are already hyped, call unHype. Otherwise, call hype.
     if (isHyped) {
+      // --- UN-HYPE LOGIC ---
       await unHypeMovie(movie.id);
+      // 1. UPDATE THIS TO MATCH YOUR BACKEND
+      setDisplayScore(prev => prev - 10000); 
     } else {
+      // --- HYPE LOGIC ---
       await hypeMovie(movie.id);
+      // 2. UPDATE THIS TO MATCH YOUR BACKEND
+      setDisplayScore(prev => prev + 10000); 
+      
+      setShowHypeAnimation(true);
+      setTimeout(() => {
+        setShowHypeAnimation(false);
+      }, 600); 
     }
     
     setIsHyping(false);
@@ -54,26 +64,32 @@ const MovieCard = ({ movie }) => {
         <div 
           className="absolute top-0 right-4 -mt-6 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border-2 border-gray-800 backdrop-blur-sm bg-opacity-70"
         >
-          🔥 {movie.hypeCount}
+          {showHypeAnimation && (
+            <span className="absolute bottom-0 left-1/2 -translate-x-1/2 text-green-400 font-bold animate-pop-out">
+              {/* 3. UPDATE THE ANIMATION TEXT */}
+              +10K
+            </span>
+          )}
+          🔥 {displayHypeString}
         </div>
         
         <h3 className="text-lg font-bold text-white truncate">{movie.title}</h3>
         <p className="text-gray-400 text-sm mt-1">
           {formatReleaseDate(movie.releaseDate)}
-        </p>
+        </p> {/* <-- Fixed the closing tag here */}
         
         <button 
           onClick={handleHypeClick}
-          disabled={isHyping} // 3. --- UPDATE THIS LOGIC --- (Allow clicking if hyped)
+          disabled={isHyping}
           className={`w-full mt-4 py-2 rounded-lg font-semibold text-white transition-colors duration-200
             ${isHyped 
-              ? 'bg-green-600 hover:bg-green-700' // Make it clickable (was cursor-not-allowed)
+              ? 'bg-green-600 hover:bg-green-700' 
               : 'bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
             }
-            ${isHyping ? 'animate-pulse' : ''}
+            ${isHyping && !isHyped ? 'animate-pulse' : ''}
           `}
         >
-          {isHyped ? 'Hyped!' : (isHyping ? 'Hyping...' : 'HYPE THIS!')}
+          {isHyping ? (isHyped ? 'Unhyping...' : 'Hyping...') : (isHyped ? 'Hyped!' : 'HYPE THIS!')}
         </button>
       </div>
     </div>

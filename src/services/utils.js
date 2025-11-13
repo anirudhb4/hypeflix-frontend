@@ -11,3 +11,15 @@ export const formatReleaseDate = (dateString) => {
     return dateString; // Return original if formatting fails
   }
 };
+
+// This is a powerful built-in browser API to format numbers
+// e.g., 10500 -> "10.5K", 1000000 -> "1M"
+export const formatCompact = (number) => {
+  if (typeof number !== 'number') {
+    return '...';
+  }
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    compactDisplay: 'short'
+  }).format(number);
+};

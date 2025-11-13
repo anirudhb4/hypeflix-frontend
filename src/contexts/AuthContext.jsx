@@ -1,10 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient'; // Corrected relative path
-import api from '../services/api'; // Corrected relative path
+import { supabase } from '../supabaseClient'; // Corrected path
+import api from '../services/api'; // Corrected path
 
 const AuthContext = createContext();
 
-// 1. Remove 'export' from here
+// This is the hook we will export as a NAMED export
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
+// This is the component we will export as a DEFAULT export
 const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +17,6 @@ const AuthProvider = ({ children }) => {
   // State for the button logic (fast ID check)
   const [hypedMovies, setHypedMovies] = useState(new Set());
   
-  // --- 1. ADD NEW STATE ---
   // State for "My Hype Page" (full movie objects)
   const [hypedMoviesList, setHypedMoviesList] = useState([]);
 
@@ -20,20 +24,11 @@ const AuthProvider = ({ children }) => {
   const fetchHypedMovies = async () => {
     try {
       const { data } = await api.get('/movies/hyped');
-      
-      // --- 2. UPDATE THIS FUNCTION ---
-      // 'data' is an array of Movie objects.
-      
-      // A) Save the full list for "My Hype Page"
       setHypedMoviesList(data);
-      
-      // B) Save the Set of IDs for the buttons
       const idSet = new Set(data.map(movie => movie.id));
       setHypedMovies(idSet);
-      
     } catch (error) {
-      console.error("Failed to fetch hyped movies (user might be logged out):", error);
-      // Clear both on error
+      console.error("Failed to fetch hyped movies:", error);
       setHypedMovies(new Set());
       setHypedMoviesList([]);
     }
@@ -57,8 +52,6 @@ const AuthProvider = ({ children }) => {
         if (session) {
           fetchHypedMovies();
         } else {
-          // --- 3. UPDATE LOGOUT ---
-          // Clear both states on logout
           setHypedMovies(new Set());
           setHypedMoviesList([]);
         }
@@ -82,56 +75,46 @@ const AuthProvider = ({ children }) => {
     }
     try {
       await api.post(`/movies/${movieId}/hype`);
-      
-      // 1. Optimistic update for the button
       setHypedMovies(prevSet => new Set(prevSet).add(movieId));
-      
-      // --- 4. UPDATE HYPE FUNCTION ---
-      // Re-fetch the full list to keep "My Hype Page" in sync
-      fetchHypedMovies(); 
-
+      fetchHypedMovies(); // Re-fetch full list for "My Hype Page"
     } catch (error) {
       console.error("Hype failed:", error);
       if (error.response && error.response.status === 400) {
         setHypedMovies(prevSet => new Set(prevSet).add(movieId));
-        // Also re-fetch here just in case
         fetchHypedMovies();
       }
     }
-  }, [hypedMovies]); // We can keep deps simple
+  }, [hypedMovies]); // Keep deps simple
 
-  // --- 1. ADD THIS FUNCTION ---
+  // NEW Hype Toggle Function
   const unHypeMovie = useCallback(async (movieId) => {
     if (!hypedMovies.has(movieId)) {
-      return; // Already unhyped
+      return;
     }
     try {
-      await api.delete(`/movies/${movieId}/hype`);
+      await api.delete(`/movies/${movieId}/hype`); // Call the new DELETE endpoint
       
-      // A) Optimistic update for the button
+      // Update the button set
       setHypedMovies(prevSet => {
         const newSet = new Set(prevSet);
         newSet.delete(movieId);
         return newSet;
       });
       
-      // B) Re-fetch the full list to update "My Hype Page"
-      // This ensures the "My Hype" page is accurate
+      // Update the "My Hype Page" list
       fetchHypedMovies(); 
-
     } catch (error) {
       console.error("Un-Hype failed:", error);
     }
-  }, [hypedMovies]); // Add hypedMovies to dependency array
-
+  }, [hypedMovies]); // Dependency array
 
   const value = {
     session,
     user: session?.user,
-    hypedMovies,    // The Set of IDs
-    hypedMoviesList, // --- 5. EXPORT THE NEW LIST ---
-    hypeMovie,   
-    unHypeMovie, // <-- 2. Add this
+    hypedMovies,    
+    hypedMoviesList, 
+    hypeMovie,
+    unHypeMovie, // Add the new function
     login,
     logout,
   };
@@ -143,10 +126,5 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-// 2. The hook remains a named export
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
-// 3. Make the component the default export
+// Make the component the DEFAULT export
 export default AuthProvider;

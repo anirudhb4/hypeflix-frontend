@@ -1,41 +1,78 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import api from '/src/services/api.js'; // Corrected to absolute path
+import { createContext, useContext, useState, useEffect, useRef } from 'react'; // 1. Import useRef
+import api from '../services/api'; // Corrected path
+import { useAuth } from './AuthContext'; // Corrected path
 
 const MovieContext = createContext();
 
-// 1. Remove 'export' from here
-const MovieProvider = ({ children }) => {
+export const useMovies = () => {
+  return useContext(MovieContext);
+};
+
+export const MovieProvider = ({ children }) => {
   const [movies, setMovies] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const { hypedMoviesList } = useAuth();
+
+  // --- THIS IS THE "SILENT" REFRESH FUNCTION ---
+  const refreshAllData = async () => {
+    try {
+      const [moviesResponse, leaderboardResponse] = await Promise.all([
+        api.get('/movies'),
+        api.get('/leaderboard')
+      ]);
+      setMovies(moviesResponse.data);
+      setLeaderboard(leaderboardResponse.data);
+    } catch (err) {
+      console.error("Failed to silently refresh movie data:", err);
+    }
+  };
+
+  // --- THIS IS THE "INITIAL LOAD" FUNCTION ---
   useEffect(() => {
-    // Fetch ALL data one time when the app loads
-    const fetchAllData = async () => {
+    const initialLoad = async () => {
+      setLoading(true); // Show the loading spinner
       try {
-        setLoading(true);
-        // Use Promise.all to fetch both endpoints at the same time
         const [moviesResponse, leaderboardResponse] = await Promise.all([
           api.get('/movies'),
           api.get('/leaderboard')
         ]);
-        
         setMovies(moviesResponse.data);
         setLeaderboard(leaderboardResponse.data);
-        setError(null);
       } catch (err) {
-        console.error("Failed to load app data:", err);
+        console.error("Failed to fetch movie data:", err);
         setError("Failed to load data. Is the backend running?");
       } finally {
-        setLoading(false);
+        setLoading(false); // Hide the loading spinner
       }
     };
+    
+    initialLoad();
+  }, []); // Empty array means it runs only ONCE.
 
-    fetchAllData();
-  }, []);
+  
+  // --- THIS IS THE "REFRESH ON HYPE" HOOK (NEW LOGIC) ---
+  
+  // 2. Use a ref to track if this is the first run
+  const isInitialMount = useRef(true);
 
-  // Provide the data and loading state to the whole app
+  useEffect(() => {
+    // 3. Check the ref's "current" value
+    if (isInitialMount.current) {
+      // This is the first render, so set the ref to false and do nothing.
+      // The "initialLoad" useEffect is already handling the first fetch.
+      isInitialMount.current = false;
+    } else {
+      // This is not the first render, it's a change to hypedMoviesList
+      // (from login, hype, or unhype).
+      // So, run the "silent" refresh.
+      refreshAllData();
+    }
+  }, [hypedMoviesList]); // This is the dependency that triggers the refresh
+
+
   const value = {
     movies,
     leaderboard,
@@ -43,13 +80,11 @@ const MovieProvider = ({ children }) => {
     error,
   };
 
-  return <MovieContext.Provider value={value}>{children}</MovieContext.Provider>;
+  return (
+    <MovieContext.Provider value={value}>
+      {children}
+    </MovieContext.Provider>
+  );
 };
 
-// 2. The hook remains a named export
-export const useMovies = () => {
-  return useContext(MovieContext);
-};
-
-// 3. Make the component the default export
 export default MovieProvider;

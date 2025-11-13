@@ -1,16 +1,19 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from '/src/components/Navbar.jsx';
-import Home from '/src/pages/Home.jsx';
-import LoginPage from '/src/pages/LoginPage.jsx';
-import LeaderboardPage from '/src/pages/LeaderboardPage.jsx';
-import MyHypePage from '/src/pages/MyHypePage.jsx'; // 1. Import new page
-import { AuthProvider } from '/src/contexts/AuthContext.jsx';
-import { MovieProvider } from '/src/contexts/MovieContext.jsx'; // 2. Import cache
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import LoginPage from './pages/LoginPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import MyHypePage from './pages/MyHypePage'; 
+
+// 1. Import contexts as DEFAULT (no braces)
+import AuthProvider from './contexts/AuthContext';
+import MovieProvider from './contexts/MovieContext';
 
 function App() {
   return (
+    // 2. Use the default imports
     <AuthProvider>
-      <MovieProvider> {/* 3. Wrap the Router with the MovieProvider */}
+      <MovieProvider>
         <Router>
           <div className="min-h-screen bg-gray-900 text-white font-sans">
             <Navbar />
@@ -18,7 +21,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/leaderboard" element={<LeaderboardPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/my-hype" element={<MyHypePage />} /> {/* 4. Add new route */}
+              <Route path="/my-hype" element={<MyHypePage />} />
             </Routes>
           </div>
         </Router>
