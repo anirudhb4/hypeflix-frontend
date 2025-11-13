@@ -10,8 +10,10 @@ const api = axios.create({
 
 // Add a request interceptor to attach the Token automatically
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('sb-access-token'); // We will save token here later
-    if (token) {
+    // --- THIS IS THE CHANGE ---
+    const token = localStorage.getItem('hypeflix-access-token'); 
+    
+    if (token && token !== 'null') { // Check for "null" string
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

@@ -1,50 +1,74 @@
-import { formatReleaseDate } from '../services/utils.js';
+import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext.jsx'; // Updated path
+import { useNavigate } from 'react-router-dom';
+import { formatReleaseDate } from '../services/utils.js'; // Updated path
 
 const MovieCard = ({ movie }) => {
-  const posterUrl = movie.posterPath
-    ? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
-    : 'https://placehold.co/500x750/1a202c/e53e3e?text=No+Image';
+  const posterUrl = movie.posterPath 
+    ? `https://image.tmdb.org/t/p/w500${movie.posterPath}` 
+    : 'https://via.placeholder.com/500x750?text=No+Image';
+
+  // --- GET DATA FROM OUR AUTH CONTEXT ---
+  const { session, hypedMovies, hypeMovie } = useAuth(); // Use 'session' to check login
+  const navigate = useNavigate();
+
+  // --- CHECK IF THIS MOVIE ID IS IN OUR SET ---
+  const isHyped = hypedMovies.has(movie.id);
+  
+  // Local state just for the "Loading..." text
+  const [isHyping, setIsHyping] = useState(false);
+
+  const handleHypeClick = async () => {
+    // 1. If not logged in, go to login page
+    if (!session) { // Check against session
+      navigate('/login');
+      return;
+    }
+
+    // 2. If already hyped, do nothing
+    if (isHyped) return;
+
+    // 3. Hype it!
+    setIsHyping(true);
+    await hypeMovie(movie.id);
+    setIsHyping(false);
+  };
 
   return (
-    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg group transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl">
+    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
       <div className="relative">
-        {/* Poster Image */}
         <img 
           src={posterUrl} 
           alt={movie.title} 
-          className="w-full h-96 object-cover transition-transform duration-300 group-hover:blur-[2px]" 
+          className="w-full h-96 object-cover group-hover:blur-[2px] transition-all duration-300"
         />
-        
-        {/* Gradient Overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-
-        {/* Content overlaid on the bottom of the image */}
-        <div className="absolute bottom-0 left-0 p-4 w-full">
-          <div className="flex justify-between items-center mb-2">
-            {/* 1. Hype Count near title */}
-            <div 
-              className="flex-shrink-0 bg-red-600/90 text-white text-sm font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-sm border border-red-500"
-              title={`${movie.rawHypeScore} raw hype score`}
-            >
-              🔥 {movie.hypeCount}
-            </div>
-            
-            {/* 2. Formatted Release Date */}
-            <span className="text-gray-200 text-xs font-semibold bg-black/50 px-2 py-1 rounded">
-              {formatReleaseDate(movie.releaseDate)}
-            </span>
-          </div>
-
-          <h3 className="text-lg font-bold text-white truncate" title={movie.title}>
-            {movie.title}
-          </h3>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-70"></div>
       </div>
-      
-      {/* Hype Button */}
-      <div className="p-4 bg-gray-800">
-        <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
-          HYPE THIS!
+
+      <div className="p-4 relative -mt-16 z-10">
+        <div 
+          className="absolute top-0 right-4 -mt-6 bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border-2 border-gray-800 backdrop-blur-sm bg-opacity-70"
+        >
+          🔥 {movie.hypeCount}
+        </div>
+        
+        <h3 className="text-lg font-bold text-white truncate">{movie.title}</h3>
+        <p className="text-gray-400 text-sm mt-1">
+          {formatReleaseDate(movie.releaseDate)}
+        </p>
+        
+        <button 
+          onClick={handleHypeClick}
+          disabled={isHyped || isHyping}
+          className={`w-full mt-4 py-2 rounded-lg font-semibold text-white transition-colors duration-200
+            ${isHyped 
+              ? 'bg-green-600 cursor-not-allowed' 
+              : 'bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
+            }
+            ${isHyping ? 'animate-pulse' : ''}
+          `}
+        >
+          {isHyped ? 'Hyped!' : (isHyping ? 'Hyping...' : 'HYPE THIS!')}
         </button>
       </div>
     </div>
