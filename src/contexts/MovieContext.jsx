@@ -11,8 +11,6 @@ export function MovieProvider({ children }) {
   const [error, setError] = useState(null);
   const hasLoadedOnce = useRef(false);
 
-  // We only fetch ONCE on mount. We do NOT listen to auth changes automatically.
-  // This prevents the "full reload" flicker.
   useEffect(() => {
     const fetchAllData = async () => {
       if (!hasLoadedOnce.current) setLoading(true);
@@ -36,20 +34,28 @@ export function MovieProvider({ children }) {
     fetchAllData();
   }, []); 
 
-  // --- NEW FUNCTION: Manually update the cache without refetching ---
+  // --- FIX: RE-CALCULATE LEADERBOARD FROM SCRATCH ---
   const updateLocalScore = (movieId, amount) => {
-    const updateList = (list) => list.map(m => {
-      if (m.id === movieId) {
-        const newScore = m.rawHypeScore + amount;
-        // We need to manually format the new string if we want it perfectly synced,
-        // but for now, let's trust the raw score update
-        return { ...m, rawHypeScore: newScore };
-      }
-      return m;
-    });
+    setMovies(prevMovies => {
+      // 1. Create the updated full list of movies
+      const updatedMovies = prevMovies.map(m => {
+        if (m.id === movieId) {
+          return { ...m, rawHypeScore: m.rawHypeScore + amount };
+        }
+        return m;
+      });
 
-    setMovies(prev => updateList(prev));
-    setLeaderboard(prev => updateList(prev).sort((a,b) => b.rawHypeScore - a.rawHypeScore));
+      // 2. Derive the new Top 10 from the updated full list
+      const newLeaderboard = [...updatedMovies]
+        .sort((a, b) => b.rawHypeScore - a.rawHypeScore) // Sort Descending
+        .slice(0, 10); // Take Top 10
+
+      // 3. Update the leaderboard state
+      setLeaderboard(newLeaderboard);
+      
+      // 4. Return the updated movies list
+      return updatedMovies;
+    });
   };
 
   const value = {
@@ -57,7 +63,7 @@ export function MovieProvider({ children }) {
     leaderboard,
     loading,
     error,
-    updateLocalScore, // Expose this function
+    updateLocalScore, 
   };
 
   return (
@@ -71,5 +77,4 @@ export const useMovies = () => {
   return useContext(MovieContext);
 };
 
-// --- FIX: EXPORT DEFAULT ---
 export default MovieProvider;
