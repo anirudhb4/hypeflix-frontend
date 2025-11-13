@@ -1,69 +1,72 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
-import api from '../services/api'; // Import our Axios instance
+import { supabase } from '../supabaseClient'; // Corrected relative path
+import api from '../services/api'; // Corrected relative path
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+// 1. Remove 'export' from here
+const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // --- NEW STATE ---
-  // We'll store the IDs of hyped movies in a Set.
-  // Sets are very fast for checking: hypedMovies.has(123)
+  // State for the button logic (fast ID check)
   const [hypedMovies, setHypedMovies] = useState(new Set());
+  
+  // --- 1. ADD NEW STATE ---
+  // State for "My Hype Page" (full movie objects)
+  const [hypedMoviesList, setHypedMoviesList] = useState([]);
 
-  // --- NEW FUNCTION ---
-  // Fetches the list of hyped movie IDs from our Spring Boot backend
+  
   const fetchHypedMovies = async () => {
     try {
-      // Call our backend endpoint: GET /api/movies/hyped
       const { data } = await api.get('/movies/hyped');
       
-      // 'data' is an array of Movie objects. We just want their IDs.
+      // --- 2. UPDATE THIS FUNCTION ---
+      // 'data' is an array of Movie objects.
+      
+      // A) Save the full list for "My Hype Page"
+      setHypedMoviesList(data);
+      
+      // B) Save the Set of IDs for the buttons
       const idSet = new Set(data.map(movie => movie.id));
       setHypedMovies(idSet);
       
     } catch (error) {
-      // This will fail if the user is logged out, which is fine.
       console.error("Failed to fetch hyped movies (user might be logged out):", error);
+      // Clear both on error
+      setHypedMovies(new Set());
+      setHypedMoviesList([]);
     }
   };
 
-  // This useEffect runs once when the app loads
   useEffect(() => {
-    // Check for an active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       localStorage.setItem('hypeflix-access-token', session?.access_token || null);
-      
-      // --- NEW ---
-      // If we have a session on page load, fetch the user's hyped movies
       if (session) {
         fetchHypedMovies();
       }
       setLoading(false);
     });
 
-    // Listen for auth changes (login, logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         localStorage.setItem('hypeflix-access-token', session?.access_token || null);
         
-        // --- NEW ---
         if (session) {
-          // User just logged in, fetch their list
           fetchHypedMovies();
         } else {
-          // User just logged out, clear the list
+          // --- 3. UPDATE LOGOUT ---
+          // Clear both states on logout
           setHypedMovies(new Set());
+          setHypedMoviesList([]);
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []); // The empty array [] means this runs only once
+  }, []); 
 
   const login = async (email, password) => {
     return supabase.auth.signInWithPassword({ email, password });
@@ -73,39 +76,62 @@ export const AuthProvider = ({ children }) => {
     return supabase.auth.signOut();
   };
 
-  // --- NEW FUNCTION ---
-  // This function will be called from the MovieCard button
   const hypeMovie = useCallback(async (movieId) => {
-    // 1. Check our Set. If it's already there, do nothing.
     if (hypedMovies.has(movieId)) {
-      console.log("Already hyped, skipping.");
       return; 
     }
-
     try {
-      // 2. Call our Spring Boot backend: POST /api/movies/{movieId}/hype
       await api.post(`/movies/${movieId}/hype`);
       
-      // 3. Update our local state instantly (this is called an "Optimistic Update")
-      // This makes the button change state without a page refresh.
+      // 1. Optimistic update for the button
       setHypedMovies(prevSet => new Set(prevSet).add(movieId));
       
+      // --- 4. UPDATE HYPE FUNCTION ---
+      // Re-fetch the full list to keep "My Hype Page" in sync
+      fetchHypedMovies(); 
+
     } catch (error) {
       console.error("Hype failed:", error);
-      // If the backend says we already hyped it (e.g., race condition)
       if (error.response && error.response.status === 400) {
-        // Just update the local state to match the backend
         setHypedMovies(prevSet => new Set(prevSet).add(movieId));
+        // Also re-fetch here just in case
+        fetchHypedMovies();
       }
     }
-  }, [hypedMovies]); // Re-create this function only if the hypedMovies set changes
+  }, [hypedMovies]); // We can keep deps simple
 
-  // Expose the new state and function to the rest of the app
+  // --- 1. ADD THIS FUNCTION ---
+  const unHypeMovie = useCallback(async (movieId) => {
+    if (!hypedMovies.has(movieId)) {
+      return; // Already unhyped
+    }
+    try {
+      await api.delete(`/movies/${movieId}/hype`);
+      
+      // A) Optimistic update for the button
+      setHypedMovies(prevSet => {
+        const newSet = new Set(prevSet);
+        newSet.delete(movieId);
+        return newSet;
+      });
+      
+      // B) Re-fetch the full list to update "My Hype Page"
+      // This ensures the "My Hype" page is accurate
+      fetchHypedMovies(); 
+
+    } catch (error) {
+      console.error("Un-Hype failed:", error);
+    }
+  }, [hypedMovies]); // Add hypedMovies to dependency array
+
+
   const value = {
     session,
     user: session?.user,
-    hypedMovies, // Pass the Set of IDs
-    hypeMovie,   // Pass the function to hype a movie
+    hypedMovies,    // The Set of IDs
+    hypedMoviesList, // --- 5. EXPORT THE NEW LIST ---
+    hypeMovie,   
+    unHypeMovie, // <-- 2. Add this
     login,
     logout,
   };
@@ -117,7 +143,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// This custom hook is how components will access the context
+// 2. The hook remains a named export
 export const useAuth = () => {
   return useContext(AuthContext);
 };
+
+// 3. Make the component the default export
+export default AuthProvider;

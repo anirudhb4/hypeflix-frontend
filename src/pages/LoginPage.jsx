@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '/src/contexts/AuthContext.jsx'; // Corrected absolute path
 import { useNavigate, Link } from 'react-router-dom';
 
 const LoginPage = () => {

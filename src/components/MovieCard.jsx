@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Updated path
+import { useAuth } from '../contexts/AuthContext.jsx'; // Corrected path
 import { useNavigate } from 'react-router-dom';
-import { formatReleaseDate } from '../services/utils.js'; // Updated path
+import { formatReleaseDate } from '../services/utils.js'; // Corrected path
 
 const MovieCard = ({ movie }) => {
   const posterUrl = movie.posterPath 
@@ -9,7 +9,8 @@ const MovieCard = ({ movie }) => {
     : 'https://via.placeholder.com/500x750?text=No+Image';
 
   // --- GET DATA FROM OUR AUTH CONTEXT ---
-  const { session, hypedMovies, hypeMovie } = useAuth(); // Use 'session' to check login
+  // 1. Get the new 'unHypeMovie' function
+  const { session, hypedMovies, hypeMovie, unHypeMovie } = useAuth();
   const navigate = useNavigate();
 
   // --- CHECK IF THIS MOVIE ID IS IN OUR SET ---
@@ -25,12 +26,16 @@ const MovieCard = ({ movie }) => {
       return;
     }
 
-    // 2. If already hyped, do nothing
-    if (isHyped) return;
-
-    // 3. Hype it!
     setIsHyping(true);
-    await hypeMovie(movie.id);
+    
+    // 2. --- UPDATE THIS LOGIC ---
+    // If we are already hyped, call unHype. Otherwise, call hype.
+    if (isHyped) {
+      await unHypeMovie(movie.id);
+    } else {
+      await hypeMovie(movie.id);
+    }
+    
     setIsHyping(false);
   };
 
@@ -59,10 +64,10 @@ const MovieCard = ({ movie }) => {
         
         <button 
           onClick={handleHypeClick}
-          disabled={isHyped || isHyping}
+          disabled={isHyping} // 3. --- UPDATE THIS LOGIC --- (Allow clicking if hyped)
           className={`w-full mt-4 py-2 rounded-lg font-semibold text-white transition-colors duration-200
             ${isHyped 
-              ? 'bg-green-600 cursor-not-allowed' 
+              ? 'bg-green-600 hover:bg-green-700' // Make it clickable (was cursor-not-allowed)
               : 'bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
             }
             ${isHyping ? 'animate-pulse' : ''}
