@@ -1,26 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient'; // Corrected path
-import api from '../services/api'; // Corrected path
+import { supabase } from '/src/supabaseClient.js'; 
+import api from '/src/services/api.js'; 
 
 const AuthContext = createContext();
 
-// This is the hook we will export as a NAMED export
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
-
-// This is the component we will export as a DEFAULT export
 const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // State for the button logic (fast ID check)
   const [hypedMovies, setHypedMovies] = useState(new Set());
-  
-  // State for "My Hype Page" (full movie objects)
   const [hypedMoviesList, setHypedMoviesList] = useState([]);
 
-  
   const fetchHypedMovies = async () => {
     try {
       const { data } = await api.get('/movies/hyped');
@@ -28,7 +17,6 @@ const AuthProvider = ({ children }) => {
       const idSet = new Set(data.map(movie => movie.id));
       setHypedMovies(idSet);
     } catch (error) {
-      console.error("Failed to fetch hyped movies:", error);
       setHypedMovies(new Set());
       setHypedMoviesList([]);
     }
@@ -38,9 +26,7 @@ const AuthProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       localStorage.setItem('hypeflix-access-token', session?.access_token || null);
-      if (session) {
-        fetchHypedMovies();
-      }
+      if (session) fetchHypedMovies();
       setLoading(false);
     });
 
@@ -48,7 +34,6 @@ const AuthProvider = ({ children }) => {
       (_event, session) => {
         setSession(session);
         localStorage.setItem('hypeflix-access-token', session?.access_token || null);
-        
         if (session) {
           fetchHypedMovies();
         } else {
@@ -57,64 +42,44 @@ const AuthProvider = ({ children }) => {
         }
       }
     );
-
     return () => subscription.unsubscribe();
   }, []); 
 
-  const login = async (email, password) => {
-    return supabase.auth.signInWithPassword({ email, password });
-  };
+  const login = (email, password) => supabase.auth.signInWithPassword({ email, password });
+  const logout = () => supabase.auth.signOut();
 
-  const logout = async () => {
-    return supabase.auth.signOut();
-  };
-
-  const hypeMovie = useCallback(async (movieId) => {
-    if (hypedMovies.has(movieId)) {
-      return; 
-    }
+  // API Calls - these now ONLY update the backend and the ID set
+  const hypeMovieApi = useCallback(async (movieId) => {
+    setHypedMovies(prev => new Set(prev).add(movieId)); // Optimistic ID add
     try {
       await api.post(`/movies/${movieId}/hype`);
-      setHypedMovies(prevSet => new Set(prevSet).add(movieId));
-      fetchHypedMovies(); // Re-fetch full list for "My Hype Page"
-    } catch (error) {
-      console.error("Hype failed:", error);
-      if (error.response && error.response.status === 400) {
-        setHypedMovies(prevSet => new Set(prevSet).add(movieId));
-        fetchHypedMovies();
-      }
-    }
-  }, [hypedMovies]); // Keep deps simple
-
-  // NEW Hype Toggle Function
-  const unHypeMovie = useCallback(async (movieId) => {
-    if (!hypedMovies.has(movieId)) {
-      return;
-    }
-    try {
-      await api.delete(`/movies/${movieId}/hype`); // Call the new DELETE endpoint
-      
-      // Update the button set
-      setHypedMovies(prevSet => {
-        const newSet = new Set(prevSet);
-        newSet.delete(movieId);
-        return newSet;
+      fetchHypedMovies(); // Update "My Hype" list in background
+    } catch (e) {
+      setHypedMovies(prev => { // Rollback
+        const s = new Set(prev); s.delete(movieId); return s;
       });
-      
-      // Update the "My Hype Page" list
-      fetchHypedMovies(); 
-    } catch (error) {
-      console.error("Un-Hype failed:", error);
     }
-  }, [hypedMovies]); // Dependency array
+  }, []);
+
+  const unHypeMovieApi = useCallback(async (movieId) => {
+    setHypedMovies(prev => { // Optimistic ID remove
+        const s = new Set(prev); s.delete(movieId); return s;
+    }); 
+    try {
+      await api.delete(`/movies/${movieId}/hype`);
+      fetchHypedMovies(); 
+    } catch (e) {
+      setHypedMovies(prev => new Set(prev).add(movieId)); // Rollback
+    }
+  }, []);
 
   const value = {
     session,
     user: session?.user,
     hypedMovies,    
     hypedMoviesList, 
-    hypeMovie,
-    unHypeMovie, // Add the new function
+    hypeMovieApi,   // Renamed to be clear it's the API call
+    unHypeMovieApi, // Renamed
     login,
     logout,
   };
@@ -126,5 +91,8 @@ const AuthProvider = ({ children }) => {
   );
 };
 
-// Make the component the DEFAULT export
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
 export default AuthProvider;

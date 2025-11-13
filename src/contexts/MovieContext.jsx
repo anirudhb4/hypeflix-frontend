@@ -1,39 +1,22 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react'; // 1. Import useRef
-import api from '../services/api'; // Corrected path
-import { useAuth } from './AuthContext'; // Corrected path
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import api from '/src/services/api.js'; 
+import { useAuth } from '/src/contexts/AuthContext.jsx';
 
 const MovieContext = createContext();
 
-export const useMovies = () => {
-  return useContext(MovieContext);
-};
-
-export const MovieProvider = ({ children }) => {
+export function MovieProvider({ children }) {
   const [movies, setMovies] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const hasLoadedOnce = useRef(false);
 
-  const { hypedMoviesList } = useAuth();
-
-  // --- THIS IS THE "SILENT" REFRESH FUNCTION ---
-  const refreshAllData = async () => {
-    try {
-      const [moviesResponse, leaderboardResponse] = await Promise.all([
-        api.get('/movies'),
-        api.get('/leaderboard')
-      ]);
-      setMovies(moviesResponse.data);
-      setLeaderboard(leaderboardResponse.data);
-    } catch (err) {
-      console.error("Failed to silently refresh movie data:", err);
-    }
-  };
-
-  // --- THIS IS THE "INITIAL LOAD" FUNCTION ---
+  // We only fetch ONCE on mount. We do NOT listen to auth changes automatically.
+  // This prevents the "full reload" flicker.
   useEffect(() => {
-    const initialLoad = async () => {
-      setLoading(true); // Show the loading spinner
+    const fetchAllData = async () => {
+      if (!hasLoadedOnce.current) setLoading(true);
+      
       try {
         const [moviesResponse, leaderboardResponse] = await Promise.all([
           api.get('/movies'),
@@ -45,39 +28,36 @@ export const MovieProvider = ({ children }) => {
         console.error("Failed to fetch movie data:", err);
         setError("Failed to load data. Is the backend running?");
       } finally {
-        setLoading(false); // Hide the loading spinner
+        setLoading(false);
+        hasLoadedOnce.current = true;
       }
     };
     
-    initialLoad();
-  }, []); // Empty array means it runs only ONCE.
+    fetchAllData();
+  }, []); 
 
-  
-  // --- THIS IS THE "REFRESH ON HYPE" HOOK (NEW LOGIC) ---
-  
-  // 2. Use a ref to track if this is the first run
-  const isInitialMount = useRef(true);
+  // --- NEW FUNCTION: Manually update the cache without refetching ---
+  const updateLocalScore = (movieId, amount) => {
+    const updateList = (list) => list.map(m => {
+      if (m.id === movieId) {
+        const newScore = m.rawHypeScore + amount;
+        // We need to manually format the new string if we want it perfectly synced,
+        // but for now, let's trust the raw score update
+        return { ...m, rawHypeScore: newScore };
+      }
+      return m;
+    });
 
-  useEffect(() => {
-    // 3. Check the ref's "current" value
-    if (isInitialMount.current) {
-      // This is the first render, so set the ref to false and do nothing.
-      // The "initialLoad" useEffect is already handling the first fetch.
-      isInitialMount.current = false;
-    } else {
-      // This is not the first render, it's a change to hypedMoviesList
-      // (from login, hype, or unhype).
-      // So, run the "silent" refresh.
-      refreshAllData();
-    }
-  }, [hypedMoviesList]); // This is the dependency that triggers the refresh
-
+    setMovies(prev => updateList(prev));
+    setLeaderboard(prev => updateList(prev).sort((a,b) => b.rawHypeScore - a.rawHypeScore));
+  };
 
   const value = {
     movies,
     leaderboard,
     loading,
     error,
+    updateLocalScore, // Expose this function
   };
 
   return (
@@ -85,6 +65,11 @@ export const MovieProvider = ({ children }) => {
       {children}
     </MovieContext.Provider>
   );
+}
+
+export const useMovies = () => {
+  return useContext(MovieContext);
 };
 
+// --- FIX: EXPORT DEFAULT ---
 export default MovieProvider;

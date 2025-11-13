@@ -1,69 +1,60 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { formatReleaseDate, formatCompact } from '../services/utils';
+import { useAuth } from '/src/contexts/AuthContext.jsx';
+import { useMovies } from '/src/contexts/MovieContext.jsx';
+import { formatReleaseDate, formatCompact } from '/src/services/utils.js';
 import { Heart, Zap } from 'lucide-react';
+import { useState } from 'react';
 
-// This is the "grid" card for Leaderboard and My Hype pages
-const MovieCard = ({ movie }) => {
-  const { session, hypedMovies, hypeMovie, unHypeMovie } = useAuth();
+const MovieCard = ({ movie, rank = null }) => {
+  const { session, hypedMovies, hypeMovieApi, unHypeMovieApi } = useAuth();
+  const { updateLocalScore } = useMovies();
   const navigate = useNavigate();
 
-  const initialRawScore = movie.rawHypeScore;
-  const initialHypeCount = movie.hypeCount;
-  const isHyped = hypedMovies.has(movie.id);
-
-  const [currentHype, setCurrentHype] = useState(initialRawScore);
-  const [currentHypeString, setCurrentHypeString] = useState(initialHypeCount);
-  const [isCurrentlyHyped, setIsCurrentlyHyped] = useState(isHyped);
   const [popText, setPopText] = useState('');
+  const isCurrentlyHyped = hypedMovies.has(movie.id);
+  const currentHypeString = formatCompact(movie.rawHypeScore);
 
   const posterUrl = movie.posterPath 
     ? `https://image.tmdb.org/t/p/w500${movie.posterPath}` 
-    : 'https://via.placeholder.com/500x750?text=No+Image';
+    : 'https://placehold.co/500x750/000000/222222?text=No+Image';
 
-  const handleHypeToggle = async () => {
+  const handleHypeToggle = () => {
     if (!session) {
       navigate('/login');
       return;
     }
-
+    
     if (isCurrentlyHyped) {
-      const newScore = currentHype - 10000;
-      unHypeMovie(movie.id);
-      setIsCurrentlyHyped(false);
-      setCurrentHype(newScore);
-      setCurrentHypeString(formatCompact(newScore));
+      unHypeMovieApi(movie.id);
+      updateLocalScore(movie.id, -10000);
       setPopText('-10K');
     } else {
-      const newScore = currentHype + 10000;
-      hypeMovie(movie.id);
-      setIsCurrentlyHyped(true);
-      setCurrentHype(newScore);
-      setCurrentHypeString(formatCompact(newScore));
+      hypeMovieApi(movie.id);
+      updateLocalScore(movie.id, 10000);
       setPopText('+10K');
     }
     setTimeout(() => setPopText(''), 750);
   };
   
   return (
-    // Restyled to bg-gray-950 (almost black)
-    <div className="bg-gray-950 rounded-lg overflow-hidden shadow-md hover:shadow-xl hover:shadow-gray-800/30 transition-all duration-300 relative group">
-      
+    <div className="bg-black rounded-lg overflow-hidden shadow-md border border-gray-900 hover:shadow-xl hover:shadow-gray-800/30 transition-all duration-300 relative group">
       <div className="relative">
         <img src={posterUrl} alt={movie.title} className="w-full h-96 object-cover" />
-        {/* Hype Count - B&W theme */}
-        <div className="absolute top-3 right-3 bg-white text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10 flex items-center gap-1">
-          <Zap size={14} />
-          {currentHypeString}
+        <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg z-10 flex items-center gap-3">
+          {rank && <span className="text-gray-400">#{rank}</span>}
+          <div className="flex items-center gap-1">
+            <Zap size={14} className="text-white" />
+            <span>{currentHypeString}</span>
+          </div>
         </div>
       </div>
 
       <div className="p-4">
         <h3 className="text-lg font-bold text-white truncate">{movie.title}</h3>
-        <p className="text-gray-400 text-sm mt-1">{formatReleaseDate(movie.releaseDate)}</p>
+        <p className="text-gray-400 text-sm mt-1">
+          Releasing on: {formatReleaseDate(movie.releaseDate)}
+        </p>
         
-        {/* Hype Button - B&W theme */}
         <button
           onClick={handleHypeToggle}
           className={`relative w-full mt-4 py-2 rounded transition-colors font-semibold flex items-center justify-center gap-2
@@ -74,13 +65,7 @@ const MovieCard = ({ movie }) => {
         >
           {isCurrentlyHyped ? <Heart size={16} /> : <Zap size={16} />}
           {isCurrentlyHyped ? 'Hyped' : 'Hype This!'}
-
-          {/* Pop Animation */}
-          {popText && (
-            <span key={popText} className="pop-animation">
-              {popText}
-            </span>
-          )}
+          {popText && <span key={popText} className="pop-animation">{popText}</span>}
         </button>
       </div>
     </div>
