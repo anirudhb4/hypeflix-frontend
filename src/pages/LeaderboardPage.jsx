@@ -1,37 +1,42 @@
 import { useMovies } from '../contexts/MovieContext';
-import MovieCard from '../components/MovieCard';
-import { ShieldAlert, Trophy } from 'lucide-react';
+import HomeMovieCard from '../components/HomeMovieCard';
+import { Loader2 } from 'lucide-react';
 
 const LeaderboardPage = () => {
-  // We get data from the cache now!
+  // We get the 'leaderboard' list (Top 10) from our global cache
   const { leaderboard, loading, error } = useMovies();
 
-  if (loading) return (
-    <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-      <div className="text-white text-2xl">Calculating Top Hype...</div>
-    </div>
-  );
-  
+  if (loading && leaderboard.length === 0) {
+    return (
+      <div className="h-screen w-full flex justify-center items-center">
+        <div className="text-white text-2xl flex items-center gap-3">
+          <Loader2 className="animate-spin" />
+          Calculating Top Hype...
+        </div>
+      </div>
+    );
+  }
+
   if (error) return (
-    <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] text-gray-400">
-      <ShieldAlert size={64} className="mb-4" />
-      <h2 className="text-2xl font-semibold">{error}</h2>
+    <div className="h-screen w-full flex justify-center items-center text-white text-center">
+      {error}
     </div>
   );
 
   return (
-    // Added padding-top to account for fixed navbar
-    <div className="container mx-auto p-4 pt-24">
-      <h1 className="text-4xl font-bold text-white mb-8 border-l-4 border-white pl-4 flex items-center gap-3">
-        <Trophy />
-        Top 10 Hyped Movies
-      </h1>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {leaderboard.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} />
-        ))}
-      </div>
+    // This container creates the same full-height, 
+    // vertical snap-scrolling "feed" as your Home.jsx
+    <div 
+      className="h-screen w-full snap-y snap-mandatory overflow-y-scroll overflow-x-hidden"
+    >
+      {/* We map over the TOP 10 movies */}
+      {leaderboard.map((movie, index) => (
+        <HomeMovieCard 
+          key={movie.id} 
+          movie={movie} 
+          rank={index + 1} // We pass the rank prop here!
+        />
+      ))}
     </div>
   );
 };

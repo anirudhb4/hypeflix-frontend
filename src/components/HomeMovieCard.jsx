@@ -1,21 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { formatReleaseDate, formatCompact } from '../services/utils';
 import { Heart, Zap } from 'lucide-react';
 
-const HomeMovieCard = ({ movie }) => {
+// This is the full-page card for the Home feed.
+// Now accepts an optional 'rank' prop.
+const HomeMovieCard = ({ movie, rank = null }) => {
   const { session, hypedMovies, hypeMovie, unHypeMovie } = useAuth();
   const navigate = useNavigate();
 
-  const initialRawScore = movie.rawHypeScore;
-  const initialHypeCount = movie.hypeCount;
-  const isHyped = hypedMovies.has(movie.id);
-
-  const [currentHype, setCurrentHype] = useState(initialRawScore);
-  const [currentHypeString, setCurrentHypeString] = useState(initialHypeCount);
-  const [isCurrentlyHyped, setIsCurrentlyHyped] = useState(isHyped);
+  // Use useEffect to sync state with props
+  const [currentHype, setCurrentHype] = useState(movie.rawHypeScore);
+  const [currentHypeString, setCurrentHypeString] = useState(movie.hypeCount);
+  const [isCurrentlyHyped, setIsCurrentlyHyped] = useState(hypedMovies.has(movie.id));
   const [popText, setPopText] = useState('');
+
+  // This ensures the card updates if the global context changes (e.g., on another page)
+  useEffect(() => {
+    setCurrentHype(movie.rawHypeScore);
+    setCurrentHypeString(movie.hypeCount);
+    setIsCurrentlyHyped(hypedMovies.has(movie.id));
+  }, [movie.rawHypeScore, movie.hypeCount, hypedMovies, movie.id]);
+
 
   const posterUrl = movie.posterPath 
     ? `https://image.tmdb.org/t/p/w1280${movie.posterPath}` 
@@ -52,6 +59,14 @@ const HomeMovieCard = ({ movie }) => {
       {/* Background Gradient */}
       <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
       
+      {/* Background Poster Image */}
+      <img 
+        src={posterUrl} 
+        alt="" 
+        className="absolute inset-0 w-full h-full object-cover object-center z-0 opacity-30"
+        onError={(e) => { e.target.style.display = 'none'; }}
+      />
+
       {/* Foreground Content */}
       <div className="relative z-20 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         
@@ -67,7 +82,7 @@ const HomeMovieCard = ({ movie }) => {
             {movie.overview}
           </p>
 
-          <div className="flex items-center gap-6 mt-6">
+          <div className="flex items-end gap-6 mt-6">
             {/* The Hype Button */}
             <button
               onClick={handleHypeToggle}
@@ -88,8 +103,16 @@ const HomeMovieCard = ({ movie }) => {
               )}
             </button>
             
+            {/* Rank - ONLY shows if 'rank' prop is passed */}
+            {rank && (
+              <div className="flex flex-col border-l-2 border-gray-700 pl-6">
+                <span className="text-3xl font-bold text-gray-400">#{rank}</span>
+                <span className="text-sm text-gray-500">Rank</span>
+              </div>
+            )}
+
             {/* Hype Count */}
-            <div className="flex flex-col">
+            <div className={`flex flex-col ${rank ? '' : 'border-l-2 border-gray-700 pl-6'}`}>
               <span className="text-3xl font-bold">{currentHypeString}</span>
               <span className="text-sm text-gray-400">Total Hype</span>
             </div>
@@ -102,6 +125,7 @@ const HomeMovieCard = ({ movie }) => {
             src={posterUrl} 
             alt={movie.title} 
             className="absolute inset-0 w-full h-full object-contain object-center rounded-lg"
+            onError={(e) => { e.target.src = 'https://placehold.co/1000x1500/000000/FFF?text=HYPEFLIX'; }}
           />
         </div>
       </div>
