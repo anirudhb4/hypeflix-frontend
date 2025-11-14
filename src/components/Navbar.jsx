@@ -1,5 +1,5 @@
 /* File: src/components/Navbar.jsx
-  Description: Updated Leaderboard nav link to "Upcoming".
+  Description: Added "Browse" link to the navbar.
 */
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,9 +24,10 @@ const Navbar = () => {
         
         <div className="space-x-6 flex items-center">
           <Link to="/" className="text-gray-300 hover:text-white transition">Home</Link>
-          
-          {/* --- UPDATED: Link text and path --- */}
           <Link to="/upcoming" className="text-gray-300 hover:text-white transition">Upcoming</Link>
+          
+          {/* --- 1. Added the new "Browse" link --- */}
+          <Link to="/browse" className="text-gray-300 hover:text-white transition">Browse</Link>
           
           {session && (
             <Link to="/my-hype" className="text-gray-300 hover:text-white transition">My Hype</Link>

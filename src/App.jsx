@@ -1,5 +1,5 @@
 /* File: src/App.jsx
-  Description: Swapped routes for Home and Leaderboard, and renamed route to /upcoming.
+  Description: Add the new /browse route.
 */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import MyHypePage from './pages/MyHypePage';
 import SignupPage from './pages/SignupPage'; 
+import BrowsePage from './pages/BrowsePage'; // 1. Import the new page
 import AuthProvider from './contexts/AuthContext';
 import MovieProvider from './contexts/MovieContext';
 
@@ -16,16 +17,12 @@ function App() {
     <AuthProvider>
       <MovieProvider>
         <Router>
-          {/* Use bg-black and our new font-dm */}
           <div className="min-h-screen bg-black text-white font-dm">
             <Navbar />
             <Routes>
-              {/* --- UPDATED: / now points to LeaderboardPage --- */}
               <Route path="/" element={<LeaderboardPage />} />
-              
-              {/* --- UPDATED: Renamed route and points to Home (upcoming) --- */}
               <Route path="/upcoming" element={<Home />} />
-              
+              <Route path="/browse" element={<BrowsePage />} /> {/* 2. Add the new route */}
               <Route path="/my-hype" element={<MyHypePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
