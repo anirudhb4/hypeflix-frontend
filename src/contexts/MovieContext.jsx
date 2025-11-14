@@ -3,7 +3,6 @@
 */
 import { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react'; // Import useMemo
 import api from '/src/services/api.js'; 
-import { useAuth } from '/src/contexts/AuthContext.jsx';
 
 const MovieContext = createContext();
 

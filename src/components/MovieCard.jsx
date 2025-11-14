@@ -3,9 +3,9 @@ import { useAuth } from '/src/contexts/AuthContext.jsx';
 import { useMovies } from '/src/contexts/MovieContext.jsx';
 import { formatReleaseDate, formatCompact } from '/src/services/utils.js';
 import { Heart, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
-const MovieCard = ({ movie, rank = null }) => {
+const MovieCard = memo(({ movie, rank = null }) => {
   const { session, hypedMovies, hypeMovieApi, unHypeMovieApi } = useAuth();
   const { updateLocalScore } = useMovies();
   const navigate = useNavigate();
@@ -70,6 +70,6 @@ const MovieCard = ({ movie, rank = null }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MovieCard;

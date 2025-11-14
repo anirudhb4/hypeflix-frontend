@@ -1,17 +1,14 @@
 /* File: src/pages/MyHypePage.jsx
-  Description: Added user's name to the title with a fallback to their email.
+  Description: Moved the welcome text above the main heading.
 */
 import { useAuth } from '../contexts/AuthContext';
 import MovieCard from '../components/MovieCard';
-import { Heart, Home, ShieldAlert } from 'lucide-react'; // Import ShieldAlert
+import { Heart, Home, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const MyHypePage = () => {
-  // 1. Get the 'user' object from useAuth()
   const { hypedMoviesList, session, user } = useAuth();
 
-  // 2. Create a display name
-  // This will be "Anirudh B" for Google users or "user@example.com" for email users
   const displayName = user?.user_metadata?.full_name || user?.email;
 
   if (!session) {
@@ -25,17 +22,19 @@ const MyHypePage = () => {
 
   return (
     <div className="container mx-auto p-4 pt-24">
-      {/* 3. Use the displayName in your title */}
-      <h1 className="text-4xl font-bold text-white mb-4 border-l-4 border-white pl-4 flex items-center gap-3">
+      
+      {/* --- 1. Welcome message is now first --- */}
+      {displayName && (
+        <h1 className="text-lg text-gray-400 mb-4 pl-5">
+          Welcome, <span className="font-semibold text-white">{displayName}</span>
+        </h1>
+      )}
+      
+      {/* --- 2. "My Hyped Movies" heading is now second --- */}
+      <h2 className="text-4xl font-bold text-white mb-8 border-l-4 border-white pl-4 flex items-center gap-3">
         <Heart />
         My Hyped Movies
-      </h1>
-      {/* 4. Add the user's name below the title */}
-      {displayName && (
-        <p className="text-lg text-gray-400 mb-8 pl-5">
-          Welcome, <span className="font-semibold text-white">{displayName}</span>
-        </p>
-      )}
+      </h2>
       
       {hypedMoviesList.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

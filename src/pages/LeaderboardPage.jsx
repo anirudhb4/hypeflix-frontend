@@ -1,11 +1,12 @@
 /* File: src/pages/LeaderboardPage.jsx
-  Description: Ensure top padding is correct to match Home.jsx.
+  Description: Replaced loading text with the skeleton component.
 */
 import { useEffect } from 'react'; 
 import { useMovies } from '../contexts/MovieContext';
 import HomeMovieCard from '../components/HomeMovieCard';
 import { Loader2 } from 'lucide-react';
 import LanguageFilter from '../components/LanguageFilter';
+import HomeMovieCardSkeleton from '../components/HomeMovieCardSkeleton'; // 1. Import skeleton
 
 const LeaderboardPage = () => {
   const { leaderboard, loading, error, languageFilter } = useMovies();
@@ -14,20 +15,13 @@ const LeaderboardPage = () => {
     document.getElementById('leaderboard-scroll-container')?.scrollTo(0, 0);
   }, [languageFilter]); 
 
+  // 2. --- THIS IS THE KEY CHANGE ---
+  // Show skeleton instead of "Calculating..." text
   if (loading && leaderboard.length === 0) {
-    // ... (no changes)
-    return (
-      <div className="h-screen w-full flex justify-center items-center">
-        <div className="text-white text-2xl flex items-center gap-3">
-          <Loader2 className="animate-spin" />
-          Calculating Top Hype...
-        </div>
-      </div>
-    );
+    return <HomeMovieCardSkeleton />;
   }
 
   if (error) return (
-    // ... (no changes)
     <div className="h-screen w-full flex justify-center items-center text-white text-center">
       {error}
     </div>
@@ -36,10 +30,8 @@ const LeaderboardPage = () => {
   return (
     <>
       <LanguageFilter />
-
       <div 
         id="leaderboard-scroll-container" 
-        // --- UPDATED: Kept pt-36 (9rem / 144px) ---
         className="h-screen w-full snap-y snap-mandatory overflow-y-scroll overflow-x-hidden pt-36"
       >
         {leaderboard.length > 0 ? (
@@ -52,7 +44,6 @@ const LeaderboardPage = () => {
           ))
         ) : (
           !loading && (
-            // --- UPDATED: Height calculation matches padding ---
             <div className="h-[calc(100vh-144px)] w-full snap-start flex items-center justify-center text-gray-500 text-lg">
               No movies found for this language.
             </div>

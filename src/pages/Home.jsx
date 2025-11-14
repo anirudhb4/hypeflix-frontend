@@ -1,14 +1,14 @@
 /* File: src/pages/Home.jsx
-  Description: Ensure top padding is correct for the new filter position.
+  Description: Replaced loading text with the new skeleton component.
 */
 import { useEffect, useState, useCallback } from 'react';
 import { useMovies } from '../contexts/MovieContext';
 import HomeMovieCard from '../components/HomeMovieCard';
 import LanguageFilter from '../components/LanguageFilter';
+import HomeMovieCardSkeleton from '../components/HomeMovieCardSkeleton'; // 1. Import skeleton
 
 const Home = () => {
   const { movies, loading, error, languageFilter } = useMovies();
-  // ... (no changes in this section)
   const [visibleMovies, setVisibleMovies] = useState([]);
   const [itemsToShow, setItemsToShow] = useState(5); 
 
@@ -25,8 +25,8 @@ const Home = () => {
     setItemsToShow(prevCount => prevCount + 5); 
   }, []);
 
-  const handleScroll = (e) => {
-    // ... (no changes in this section)
+  // 2. Wrapped handleScroll in useCallback
+  const handleScroll = useCallback((e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     
     if (scrollHeight - scrollTop <= clientHeight + 100) { 
@@ -34,19 +34,19 @@ const Home = () => {
         loadMore();
       }
     }
-  };
+  }, [loading, itemsToShow, movies.length, loadMore]); // 3. Added dependencies
 
-  if (loading && itemsToShow === 5) return <div className="text-white text-center mt-20">Loading Hype...</div>;
+  // 4. --- THIS IS THE KEY CHANGE ---
+  // Show the skeleton loader if loading and movie list is empty
+  if (loading && movies.length === 0) return <HomeMovieCardSkeleton />;
+  
   if (error) return <div className="text-white text-center mt-20">{error}</div>;
 
   return (
     <>
       <LanguageFilter /> 
-
       <div 
         id="home-scroll-container" 
-        // --- UPDATED: Kept pt-36 (9rem / 144px) ---
-        // This covers the h-20 (80px) navbar + ~h-14 (56px) filter + 8px gap
         className="h-screen w-full snap-y snap-mandatory overflow-y-scroll overflow-x-hidden pt-36" 
         onScroll={handleScroll} 
       >
@@ -56,7 +56,6 @@ const Home = () => {
           ))
         ) : (
           !loading && (
-            // --- UPDATED: Height calculation matches padding ---
             <div className="h-[calc(100vh-144px)] w-full snap-start flex items-center justify-center text-gray-500 text-lg">
               No movies found for this language.
             </div>
@@ -64,7 +63,6 @@ const Home = () => {
         )}
         
         {!loading && itemsToShow < movies.length && (
-          // ... (no changes)
           <div className="h-20 w-full flex justify-center items-center text-gray-500">
             Loading more...
           </div>

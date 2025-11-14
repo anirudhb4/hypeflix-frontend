@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '/src/contexts/AuthContext.jsx';
 import { useMovies } from '/src/contexts/MovieContext.jsx'; // Import MovieContext
 import { formatReleaseDate, formatCompact } from '/src/services/utils.js';
 import { Heart, Zap } from 'lucide-react';
 
-const HomeMovieCard = ({ movie, rank = null }) => {
+const HomeMovieCard = memo(({ movie, rank = null }) => {
   const { session, hypedMovies, hypeMovieApi, unHypeMovieApi } = useAuth();
   const { updateLocalScore } = useMovies(); // Get the manual update function
   const navigate = useNavigate();
@@ -107,6 +107,6 @@ const HomeMovieCard = ({ movie, rank = null }) => {
       </div>
     </div>
   );
-};
+});
 
 export default HomeMovieCard;
