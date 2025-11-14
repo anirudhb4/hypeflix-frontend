@@ -1,3 +1,6 @@
+/* File: src/components/Navbar.jsx
+  Description: Updated Leaderboard nav link to "Upcoming".
+*/
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Clapperboard } from 'lucide-react';
@@ -12,7 +15,6 @@ const Navbar = () => {
   };
 
   return (
-    // Fixed at the top, transparent, with a backdrop blur for a "glass" effect
     <nav className="fixed top-0 left-0 w-full bg-black/30 text-white p-4 shadow-lg z-50 backdrop-blur-md">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold text-white tracking-widest flex items-center gap-2">
@@ -22,7 +24,9 @@ const Navbar = () => {
         
         <div className="space-x-6 flex items-center">
           <Link to="/" className="text-gray-300 hover:text-white transition">Home</Link>
-          <Link to="/leaderboard" className="text-gray-300 hover:text-white transition">Leaderboard</Link>
+          
+          {/* --- UPDATED: Link text and path --- */}
+          <Link to="/upcoming" className="text-gray-300 hover:text-white transition">Upcoming</Link>
           
           {session && (
             <Link to="/my-hype" className="text-gray-300 hover:text-white transition">My Hype</Link>

@@ -1,21 +1,22 @@
-import { useState, memo } from 'react';
+/* File: src/components/HomeMovieCard.jsx
+  Description: Conditionally render "Most Hyped" title when rank is 1.
+*/
+import { useState, memo } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '/src/contexts/AuthContext.jsx';
-import { useMovies } from '/src/contexts/MovieContext.jsx'; // Import MovieContext
+import { useMovies } from '/src/contexts/MovieContext.jsx'; 
 import { formatReleaseDate, formatCompact } from '/src/services/utils.js';
 import { Heart, Zap } from 'lucide-react';
 
 const HomeMovieCard = memo(({ movie, rank = null }) => {
   const { session, hypedMovies, hypeMovieApi, unHypeMovieApi } = useAuth();
-  const { updateLocalScore } = useMovies(); // Get the manual update function
+  const { updateLocalScore } = useMovies(); 
   const navigate = useNavigate();
 
   const [popText, setPopText] = useState('');
   
-  // Check hype status from AuthContext
   const isCurrentlyHyped = hypedMovies.has(movie.id);
   
-  // Calculate the display string ON THE FLY based on the raw score in props
   const currentHypeString = formatCompact(movie.rawHypeScore);
 
   const posterUrl = movie.posterPath 
@@ -29,18 +30,12 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
     }
 
     if (isCurrentlyHyped) {
-      // 1. Call API (Updates ID Set)
       unHypeMovieApi(movie.id);
-      // 2. Update Local Number (Updates visual score instantly)
       updateLocalScore(movie.id, -10000);
-      
       setPopText('-10K');
     } else {
-      // 1. Call API
       hypeMovieApi(movie.id);
-      // 2. Update Local Number
       updateLocalScore(movie.id, 10000);
-      
       setPopText('+10K');
     }
     setTimeout(() => setPopText(''), 750);
@@ -58,6 +53,15 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
 
       <div className="relative z-20 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
         <div className="flex flex-col gap-4 text-white animate-fade-in">
+          
+          {/* --- ADDED THIS TITLE BLOCK --- */}
+          {/* This will only show on the first card of the leaderboard */}
+          {rank === 1 && (
+            <h2 className="text-3xl font-bold text-white tracking-wider mb-2 opacity-90">
+              Most Hyped
+            </h2>
+          )}
+
           <p className="font-semibold text-gray-300">
             Releasing on: {formatReleaseDate(movie.releaseDate)}
           </p>
