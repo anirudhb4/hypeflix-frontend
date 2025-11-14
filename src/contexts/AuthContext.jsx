@@ -1,3 +1,6 @@
+/* File: src/contexts/AuthContext.jsx
+  Description: Add signUp and signInWithGoogle methods.
+*/
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '/src/supabaseClient.js'; 
 import api from '/src/services/api.js'; 
@@ -10,6 +13,7 @@ const AuthProvider = ({ children }) => {
   const [hypedMovies, setHypedMovies] = useState(new Set());
   const [hypedMoviesList, setHypedMoviesList] = useState([]);
 
+  // ... (fetchHypedMovies and useEffect logic remain the same) ...
   const fetchHypedMovies = async () => {
     try {
       const { data } = await api.get('/movies/hyped');
@@ -48,7 +52,16 @@ const AuthProvider = ({ children }) => {
   const login = (email, password) => supabase.auth.signInWithPassword({ email, password });
   const logout = () => supabase.auth.signOut();
 
-  // API Calls - these now ONLY update the backend and the ID set
+  // --- ADD THESE TWO NEW FUNCTIONS ---
+  const signUp = (email, password) => supabase.auth.signUp({ email, password });
+
+  const signInWithGoogle = () => {
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+  };
+
+  // ... (hypeMovieApi and unHypeMovieApi remain the same) ...
   const hypeMovieApi = useCallback(async (movieId) => {
     setHypedMovies(prev => new Set(prev).add(movieId)); // Optimistic ID add
     try {
@@ -73,15 +86,19 @@ const AuthProvider = ({ children }) => {
     }
   }, []);
 
+
   const value = {
     session,
     user: session?.user,
     hypedMovies,    
     hypedMoviesList, 
-    hypeMovieApi,   // Renamed to be clear it's the API call
-    unHypeMovieApi, // Renamed
+    hypeMovieApi,   
+    unHypeMovieApi, 
     login,
     logout,
+    // --- ADD NEW VALUES TO EXPORT ---
+    signUp,
+    signInWithGoogle,
   };
 
   return (
