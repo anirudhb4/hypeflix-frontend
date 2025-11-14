@@ -1,9 +1,8 @@
-/* File: src/components/LanguageFilter.jsx (NEW FILE)
-  Description: A reusable component with language filter buttons.
+/* File: src/components/LanguageFilter.jsx
+  Description: Aligned filter to the left with page padding.
 */
 import { useMovies } from '../contexts/MovieContext';
 
-// Define the languages as a constant
 const LANGUAGES = [
   { code: 'all', name: 'All' },
   { code: 'hi', name: 'Hindi' },
@@ -14,19 +13,20 @@ const LANGUAGES = [
 ];
 
 const LanguageFilter = () => {
-  // Get the current filter state and the setter function from the context
   const { languageFilter, setLanguageFilter } = useMovies();
 
-  // Define styles for the buttons
-  const baseStyle = "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200";
+  const baseStyle = "px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200";
   const activeStyle = "bg-white text-black";
   const inactiveStyle = "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white";
 
   return (
-    // This container places the filter bar fixed at the top,
-    // just below the navbar, with a glass effect.
-    <div className="fixed top-20 left-0 w-full flex justify-center py-4 z-40 backdrop-blur-md">
-      <div className="flex items-center gap-2 bg-black/50 p-2 rounded-full border border-gray-800 shadow-lg">
+    // --- UPDATED:
+    // 1. Changed "justify-center" to "justify-start"
+    // 2. Added horizontal padding "px-8 md:px-12" to align
+    //    with the page content padding
+    // ---
+    <div className="fixed top-20 left-0 w-full flex justify-start py-3 z-50 px-8 md:px-12">
+      <div className="flex items-center gap-2 p-1 rounded-full">
         {LANGUAGES.map(lang => (
           <button
             key={lang.code}
