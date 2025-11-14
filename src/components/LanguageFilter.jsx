@@ -1,5 +1,5 @@
 /* File: src/components/LanguageFilter.jsx
-  Description: Added 'isStatic' prop to control positioning.
+  Description: Added 'flex-wrap' to allow buttons to wrap on small screens.
 */
 import { useMovies } from '../contexts/MovieContext';
 
@@ -12,7 +12,6 @@ const LANGUAGES = [
   { code: 'kn', name: 'Kannada' },
 ];
 
-// 1. Accept the new isStatic prop
 const LanguageFilter = ({ isStatic = false }) => {
   const { languageFilter, setLanguageFilter } = useMovies();
 
@@ -20,15 +19,15 @@ const LanguageFilter = ({ isStatic = false }) => {
   const activeStyle = "bg-white text-black";
   const inactiveStyle = "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white";
 
-  // 2. Define layout classes based on the prop
   const layoutClasses = isStatic
-    ? "relative flex justify-start py-3" // Static version (no 'fixed', 'z-index', or 'px')
-    : "fixed top-20 left-0 w-full flex justify-start py-3 z-50 px-8 md:px-12"; // Original fixed version
+    ? "relative flex justify-start py-3" 
+    // Added responsive padding for mobile
+    : "fixed top-20 left-0 w-full flex justify-start py-3 z-50 px-4 sm:px-8 md:px-12"; 
 
   return (
-    // 3. Apply the dynamic classes
     <div className={layoutClasses}>
-      <div className="flex items-center gap-2 p-1 rounded-full">
+      {/* Added flex-wrap to allow buttons to stack on small screens */}
+      <div className="flex flex-wrap justify-start items-center gap-2 p-1 rounded-full">
         {LANGUAGES.map(lang => (
           <button
             key={lang.code}

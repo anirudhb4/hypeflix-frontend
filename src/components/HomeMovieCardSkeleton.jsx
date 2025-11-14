@@ -1,33 +1,32 @@
-/* File: src/components/HomeMovieCardSkeleton.jsx (NEW FILE)
-  Description: A skeleton loader component that mimics the HomeMovieCard layout.
+/* File: src/components/HomeMovieCardSkeleton.jsx
+  Description: Matched responsive layout of the real card.
 */
 import { Zap } from 'lucide-react';
 
 const HomeMovieCardSkeleton = () => {
   return (
     <div className="h-screen w-screen snap-start relative flex items-center justify-center overflow-hidden">
-      {/* Background elements */}
       <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
       <div className="absolute inset-0 w-full h-full object-cover object-center z-0 opacity-10 bg-gray-900" />
 
-      <div className="relative z-20 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        {/* Left side (text content) */}
+      {/* Reduced padding on mobile */}
+      <div className="relative z-20 container mx-auto p-6 sm:p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div className="flex flex-col gap-4 text-white animate-pulse">
-          {/* Release Date */}
+          
           <div className="h-4 bg-gray-800 rounded w-1/3"></div>
           
-          {/* Title */}
-          <div className="h-16 bg-gray-800 rounded w-full"></div>
+          {/* Responsive title placeholder */}
+          <div className="h-12 sm:h-16 bg-gray-800 rounded w-full"></div>
           
-          {/* Overview */}
           <div className="h-4 bg-gray-800 rounded w-full"></div>
           <div className="h-4 bg-gray-800 rounded w-full"></div>
           <div className="h-4 bg-gray-800 rounded w-5/6"></div>
 
-          {/* Buttons and Stats */}
-          <div className="flex items-end gap-6 mt-6">
+          {/* Stacks vertically on mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-6 mt-6">
+            {/* Responsive button placeholder */}
             <div
-              className="relative flex items-center justify-center gap-2 px-8 py-4 rounded-full text-lg font-bold
+              className="relative flex items-center justify-center gap-2 px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg rounded-full
                  bg-gray-800 text-transparent"
             >
               <Zap />
@@ -41,9 +40,7 @@ const HomeMovieCardSkeleton = () => {
           </div>
         </div>
         
-        {/* Right side (poster) */}
         <div className="relative w-full h-[70vh] hidden md:block animate-pulse bg-gray-800 rounded-lg">
-           {/* Empty div, just needs the bg color and shape */}
         </div>
       </div>
     </div>

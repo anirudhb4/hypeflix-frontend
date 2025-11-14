@@ -58,9 +58,11 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen pt-20">
-      <div className="w-full max-w-md p-8 space-y-6 bg-gray-950 rounded-lg shadow-xl border border-gray-800">
-        <h1 className="text-3xl font-bold text-center text-white">
+    <div className="flex items-center justify-center min-h-screen pt-20 px-4">
+      {/* Responsive padding (p-6 sm:p-8) */}
+      <div className="w-full max-w-md p-6 sm:p-8 space-y-6 bg-gray-950 rounded-lg shadow-xl border border-gray-800">
+        {/* Responsive typography */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-center text-white">
           Login to HypeFlix
         </h1>
 

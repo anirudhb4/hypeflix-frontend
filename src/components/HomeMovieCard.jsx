@@ -1,5 +1,5 @@
 /* File: src/components/HomeMovieCard.jsx
-  Description: Conditionally render "Most Hyped" title when rank is 1.
+  Description: Adjusted padding, typography, and button layout for mobile.
 */
 import { useState, memo } from 'react'; 
 import { useNavigate } from 'react-router-dom';
@@ -24,11 +24,11 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
     : 'https://placehold.co/1280x720/000000/222222?text=Poster+Not+Available';
 
   const handleHypeToggle = () => {
+    // ... (no changes in this function)
     if (!session) {
       navigate('/login');
       return;
     }
-
     if (isCurrentlyHyped) {
       unHypeMovieApi(movie.id);
       updateLocalScore(movie.id, -10000);
@@ -51,13 +51,14 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
         onError={(e) => { e.target.style.display = 'none'; }}
       />
 
-      <div className="relative z-20 container mx-auto p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* Updated main content:
+        - Reduced padding on mobile (p-6)
+      */}
+      <div className="relative z-20 container mx-auto p-6 sm:p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div className="flex flex-col gap-4 text-white animate-fade-in">
           
-          {/* --- ADDED THIS TITLE BLOCK --- */}
-          {/* This will only show on the first card of the leaderboard */}
           {rank === 1 && (
-            <h2 className="text-3xl font-bold text-white tracking-wider mb-2 opacity-90">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-wider mb-2 opacity-90">
               Most Hyped
             </h2>
           )}
@@ -66,18 +67,26 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
             Releasing on: {formatReleaseDate(movie.releaseDate)}
           </p>
           
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+          {/* Responsive typography */}
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
             {movie.title}
           </h1>
           
-          <p className="text-lg text-gray-300 max-w-2xl line-clamp-6">
+          {/* Responsive typography */}
+          <p className="text-base sm:text-lg text-gray-300 max-w-2xl line-clamp-6">
             {movie.overview}
           </p>
 
-          <div className="flex items-end gap-6 mt-6">
+          {/* Updated buttons/stats container:
+            - Stacks vertically on mobile (flex-col)
+            - Aligns left on mobile (items-start)
+            - Stacks horizontally on desktop (sm:flex-row)
+          */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-6 mt-6">
             <button
               onClick={handleHypeToggle}
-              className={`relative flex items-center justify-center gap-2 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300
+              // Responsive button size
+              className={`relative flex items-center justify-center gap-2 px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg font-bold transition-all duration-300 rounded-full
                 ${isCurrentlyHyped 
                   ? 'bg-white text-black' 
                   : 'bg-white/20 text-white backdrop-blur-md border border-white/30 hover:bg-white/30'
@@ -89,15 +98,17 @@ const HomeMovieCard = memo(({ movie, rank = null }) => {
             </button>
             
             {rank && (
+              // Responsive typography
               <div className="flex flex-col border-l-2 border-gray-700 pl-6">
-                <span className="text-3xl font-bold text-gray-400">#{rank}</span>
-                <span className="text-sm text-gray-500">Rank</span>
+                <span className="text-2xl sm:text-3xl font-bold text-gray-400">#{rank}</span>
+                <span className="text-xs sm:text-sm text-gray-500">Rank</span>
               </div>
             )}
 
+            {/* Responsive typography */}
             <div className={`flex flex-col ${rank ? '' : 'border-l-2 border-gray-700 pl-6'}`}>
-              <span className="text-3xl font-bold">{currentHypeString}</span>
-              <span className="text-sm text-gray-400">Total Hype</span>
+              <span className="text-2xl sm:text-3xl font-bold">{currentHypeString}</span>
+              <span className="text-xs sm:text-sm text-gray-400">Total Hype</span>
             </div>
           </div>
         </div>

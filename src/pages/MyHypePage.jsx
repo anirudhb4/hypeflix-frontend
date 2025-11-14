@@ -21,7 +21,7 @@ const MyHypePage = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 pt-24">
+    <div className="container mx-auto p-4 sm:px-6 pt-24">
       
       {/* --- 1. Welcome message is now first --- */}
       {displayName && (
